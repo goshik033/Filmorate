@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 public class Film {
@@ -20,4 +21,5 @@ public class Film {
     @Positive
     @NotNull
     private Duration duration;
+    private Set<Integer> likes;
 }
