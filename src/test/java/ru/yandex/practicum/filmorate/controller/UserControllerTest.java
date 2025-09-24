@@ -65,7 +65,7 @@ class UserControllerTest {
     @Test
     void updateUser_badId_throws400() {
         UserController c = new UserController();
-        User u = user(null, "smith", "Agent"); 
+        User u = user(null, "smith", "Agent");
         ResponseStatusException ex1 = assertThrows(ResponseStatusException.class, () -> c.updateUser(u));
         assertEquals(400, ex1.getStatusCode().value());
 
