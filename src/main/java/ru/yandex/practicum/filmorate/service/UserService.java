@@ -8,7 +8,10 @@ import ru.yandex.practicum.filmorate.exeption.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class UserService {
@@ -64,6 +67,58 @@ public class UserService {
         });
 
         return userStorage.updateUser(user);
+    }
+
+    public User addFriend(long userId, long friendId) {
+        if (userId == friendId) {
+            throw new IncorrectParameterException("нельзя добавить себя в друзья", "friendId");
+        }
+        User u = userStorage.getUser(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        User f = userStorage.getUser(friendId)
+                .orElseThrow(() -> new UserNotFoundException(friendId));
+
+        u.getFriends().add(friendId);
+        f.getFriends().add(userId);
+
+        userStorage.updateUser(u);
+        userStorage.updateUser(f);
+        return u;
+    }
+
+    public List<User> getFriends(long userId) {
+        User u = userStorage.getUser(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        return u.getFriends().stream().map(id -> userStorage.getUser(userId).orElse(null))
+                .filter(Objects::nonNull).toList();
+    }
+
+    public List<User> getCommonFriends(long userId, long otherId) {
+        User u = userStorage.getUser(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        User o = userStorage.getUser(otherId)
+                .orElseThrow(() -> new UserNotFoundException(otherId));
+        Set<Long> friends = new HashSet<>(u.getFriends());
+        friends.retainAll(o.getFriends());
+        return friends.stream().map(id -> userStorage.getUser(userId).orElse(null))
+                .filter(Objects::nonNull).toList();
+    }
+
+    public User deleteFriend(long userId, long friendId) {
+        if (userId == friendId) {
+            throw new IncorrectParameterException("нельзя удалить себя в друзья", "friendId");
+        }
+        User u = userStorage.getUser(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        User f = userStorage.getUser(friendId)
+                .orElseThrow(() -> new UserNotFoundException(friendId));
+
+        u.getFriends().remove(friendId);
+        f.getFriends().remove(userId);
+
+        userStorage.updateUser(u);
+        userStorage.updateUser(f);
+        return u;
     }
 
 
