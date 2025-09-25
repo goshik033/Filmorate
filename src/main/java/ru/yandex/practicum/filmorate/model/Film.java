@@ -2,13 +2,17 @@ package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.springframework.stereotype.Indexed;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@Getter @Setter @ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Film {
+    @EqualsAndHashCode.Include
     private Long id;
     @NotBlank
     private String name;
@@ -18,8 +22,8 @@ public class Film {
     @Past
     @NotNull
     private LocalDate releaseDate;
-    @Positive
     @NotNull
-    private Duration duration;
-    private Set<Integer> likes;
+    @Positive
+    private Long durationMinutes;
+    private Set<Long> likes = new HashSet<>();
 }

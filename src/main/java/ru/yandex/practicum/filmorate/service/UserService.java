@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.exeption.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -21,7 +20,7 @@ public class UserService {
     }
 
     public List<User> getUsers() {
-        return new ArrayList<>(userStorage.getUsers());
+        return userStorage.getUsers();
     }
 
     public User getUser(long id) {
@@ -81,7 +80,7 @@ public class UserService {
 
     private void validate(User u) {
         if (u.getLogin() != null && u.getLogin().contains(" ")) {
-            throw new IncorrectParameterException("Не должен быть пустым","login");
+            throw new IncorrectParameterException("Не должен быть пустым", "login");
         }
         if (u.getName() == null || u.getName().isBlank()) {
             u.setName(u.getLogin());
