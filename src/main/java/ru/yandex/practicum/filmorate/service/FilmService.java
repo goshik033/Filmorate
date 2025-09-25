@@ -4,21 +4,60 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exeption.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exeption.IncorrectParameterException;
+import ru.yandex.practicum.filmorate.exeption.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
 public class FilmService {
+    private final UserStorage userStorage;
     private final FilmStorage filmStorage;
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
 
     @Autowired
-    public FilmService(FilmStorage filmStorage) {
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+        this.userStorage = userStorage;
         this.filmStorage = filmStorage;
     }
+
+    public Film addLike(long filmId, long userId) {
+
+        userStorage.getUser(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        Film film = filmStorage.getFilm(filmId)
+                .orElseThrow(() -> new FilmNotFoundException(filmId));
+
+        film.getLikes().add(userId);
+        filmStorage.updateFilm(film);
+        return film;
+    }
+
+    public void removeLike(long filmId, long userId) {
+        userStorage.getUser(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        Film film = filmStorage.getFilm(filmId)
+                .orElseThrow(() -> new FilmNotFoundException(filmId));
+        
+        film.getLikes().remove(userId);
+        filmStorage.updateFilm(film);
+    }
+
+    public List<Film> getPopularFilms(int count) {
+        return filmStorage.getAllFilms().stream()
+                .sorted(
+                        Comparator.comparingInt((Film f) -> f.getLikes() == null ? 0 : f.getLikes().size())
+                                .reversed()
+                                .thenComparing(Film::getId)
+                )
+                .limit(count)
+                .toList();
+    }
+
 
     public List<Film> getAllFilms() {
         return filmStorage.getAllFilms();
