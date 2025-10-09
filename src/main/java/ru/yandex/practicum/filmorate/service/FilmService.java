@@ -42,7 +42,7 @@ public class FilmService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
         Film film = filmStorage.getFilm(filmId)
                 .orElseThrow(() -> new FilmNotFoundException(filmId));
-        
+
         film.getLikes().remove(userId);
         filmStorage.updateFilm(film);
     }
