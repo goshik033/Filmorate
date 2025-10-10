@@ -9,7 +9,9 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter @Setter @ToString
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Film {
     @EqualsAndHashCode.Include
@@ -25,10 +27,9 @@ public class Film {
     @NotNull
     @Positive
     private Long durationMinutes;
-    private Set<Long> likes = new HashSet<>();
-    @NotEmpty
-    private Set<Genre> genres = new HashSet<>();
     @NotNull
     private MpaRating mpaRating;
+    private Set<Genre> genres = new java.util.LinkedHashSet<>();
+
 
 }
