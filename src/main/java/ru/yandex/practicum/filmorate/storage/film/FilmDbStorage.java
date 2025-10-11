@@ -9,15 +9,16 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exeption.FilmNotFoundException;
-import ru.yandex.practicum.filmorate.exeption.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 
 import java.sql.*;
-import java.sql.Date;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -128,16 +129,20 @@ public class FilmDbStorage implements FilmStorage {
         return updated;
     }
 
+    @Override
     public Film addLike(long filmId, long userId) {
         final String sql = """
                 INSERT INTO user_likes_film (film_id, user_id)
-                VALUES (?, ?)
-                ON CONFLICT (film_id, user_id) DO NOTHING
+                SELECT ?, ?
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM user_likes_film WHERE film_id = ? AND user_id = ?
+                )
                 """;
-        jdbcTemplate.update(sql, filmId, userId);
+        jdbcTemplate.update(sql, filmId, userId, filmId, userId);
         return getFilm(filmId).get();
     }
 
+    @Override
     public void removeLike(long filmId, long userId) {
         final String sql = """
                 DELETE FROM user_likes_film 
@@ -147,6 +152,7 @@ public class FilmDbStorage implements FilmStorage {
 
     }
 
+    @Override
     public List<Film> getPopularFilms(int count) {
         if (count <= 0) return List.of();
 
@@ -179,57 +185,55 @@ public class FilmDbStorage implements FilmStorage {
     }
 
 
+    private Film makeFilm(ResultSet rs) throws SQLException {
+        long id = rs.getLong("id");
+        String name = rs.getString("name");
+        String description = rs.getString("description");
+        LocalDate releaseDate = rs.getObject("release_date", LocalDate.class);
+        long durationMinutes = rs.getLong("duration_minutes");
+        long mpaId = rs.getLong("mpa_id");
+        String mpaName = rs.getString("mpa_name");
+        MpaRating mpaRating = new MpaRating(mpaId, mpaName);
+        return new Film(id, name, description, releaseDate, durationMinutes, mpaRating, new LinkedHashSet<>());
+    }
 
+    private void replaceGenres(long filmId, Set<Genre> genres) {
+        jdbcTemplate.update("DELETE FROM film_genre WHERE film_id=?", filmId);
+        if (genres == null || genres.isEmpty()) return;
 
-private Film makeFilm(ResultSet rs) throws SQLException {
-    long id = rs.getLong("id");
-    String name = rs.getString("name");
-    String description = rs.getString("description");
-    LocalDate releaseDate = rs.getObject("release_date", LocalDate.class);
-    long durationMinutes = rs.getLong("duration_minutes");
-    long mpaId = rs.getLong("mpa_id");
-    String mpaName = rs.getString("mpa_name");
-    MpaRating mpaRating = new MpaRating(mpaId, mpaName);
-    return new Film(id, name, description, releaseDate, durationMinutes, mpaRating, new LinkedHashSet<>());
-}
+        var ids = genres.stream()
+                .map(Genre::getId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
 
-private void replaceGenres(long filmId, Set<Genre> genres) {
-    jdbcTemplate.update("DELETE FROM film_genre WHERE film_id=?", filmId);
-    if (genres == null || genres.isEmpty()) return;
+        jdbcTemplate.batchUpdate(
+                "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)",
+                new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
+                    @Override
+                    public void setValues(java.sql.PreparedStatement ps, int i) throws java.sql.SQLException {
+                        ps.setLong(1, filmId);
+                        ps.setLong(2, ids.get(i));
+                    }
 
-    var ids = genres.stream()
-            .map(Genre::getId)
-            .filter(java.util.Objects::nonNull)
-            .distinct()
-            .toList();
-
-    jdbcTemplate.batchUpdate(
-            "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)",
-            new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
-                @Override
-                public void setValues(java.sql.PreparedStatement ps, int i) throws java.sql.SQLException {
-                    ps.setLong(1, filmId);
-                    ps.setLong(2, ids.get(i));
+                    @Override
+                    public int getBatchSize() {
+                        return ids.size();
+                    }
                 }
+        );
+    }
 
-                @Override
-                public int getBatchSize() {
-                    return ids.size();
-                }
-            }
-    );
-}
-
-private java.util.LinkedHashSet<Genre> getGenresByFilmId(long filmId) {
-    final String sql = """
-            SELECT g.id, g.name
-              FROM film_genre fg
-              JOIN genres g ON g.id = fg.genre_id
-             WHERE fg.film_id = ?
-             ORDER BY g.id
-            """;
-    var list = jdbcTemplate.query(sql, (rs, rn) ->
-            new Genre(rs.getLong("id"), rs.getString("name")), filmId);
-    return new java.util.LinkedHashSet<>(list);
-}
+    private java.util.LinkedHashSet<Genre> getGenresByFilmId(long filmId) {
+        final String sql = """
+                SELECT g.id, g.name
+                  FROM film_genre fg
+                  JOIN genres g ON g.id = fg.genre_id
+                 WHERE fg.film_id = ?
+                 ORDER BY g.id
+                """;
+        var list = jdbcTemplate.query(sql, (rs, rn) ->
+                new Genre(rs.getLong("id"), rs.getString("name")), filmId);
+        return new java.util.LinkedHashSet<>(list);
+    }
 }

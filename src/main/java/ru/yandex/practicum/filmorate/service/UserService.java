@@ -6,7 +6,7 @@ import ru.yandex.practicum.filmorate.exeption.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.exeption.UserAlreadyExistsException;
 import ru.yandex.practicum.filmorate.exeption.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.HashSet;
 import java.util.List;

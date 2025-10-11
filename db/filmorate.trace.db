@@ -1274,3 +1274,10 @@ GROUP BY f.id,
 ORDER BY like_count DESC
 LIMIT ?
  [42000-240]
+2025-10-11 22:01:31.464044+07:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Синтаксическая ошибка в выражении SQL "INSERT INTO user_likes_film (film_id, user_id)\000aVALUES (?, ?)\000a[*]ON CONFLICT (film_id, user_id) DO NOTHING\000a"
+Syntax error in SQL statement "INSERT INTO user_likes_film (film_id, user_id)\000aVALUES (?, ?)\000a[*]ON CONFLICT (film_id, user_id) DO NOTHING\000a"; SQL statement:
+INSERT INTO user_likes_film (film_id, user_id)
+VALUES (?, ?)
+ON CONFLICT (film_id, user_id) DO NOTHING
+ [42000-240]
