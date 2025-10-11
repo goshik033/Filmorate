@@ -1,22 +1,26 @@
--- Очистка (сначала удаляем зависимости)
-DELETE
-FROM friends;
-DELETE
-FROM user_likes_film;
-DELETE
-FROM film_genre;
-DELETE
-FROM films;
-DELETE
-FROM users;
-DELETE
-FROM genres;
-DELETE
-FROM mpa_rating;
+-- Чистая загрузка + сброс счётчиков
+SET REFERENTIAL_INTEGRITY FALSE;
 
-------------------------------------------------------------
--- Справочник рейтингов MPA
-------------------------------------------------------------
+TRUNCATE TABLE friends;
+TRUNCATE TABLE user_likes_film;
+TRUNCATE TABLE film_genre;
+TRUNCATE TABLE films;
+TRUNCATE TABLE users;
+TRUNCATE TABLE genres;
+TRUNCATE TABLE mpa_rating;
+
+
+ALTER TABLE mpa_rating      ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE genres          ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE users           ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE films           ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE film_genre      ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE user_likes_film ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE friends         ALTER COLUMN id RESTART WITH 1;
+
+SET REFERENTIAL_INTEGRITY TRUE;
+
+
 INSERT INTO mpa_rating (id, name)
 VALUES (1, 'G'),
        (2, 'PG'),
@@ -24,9 +28,7 @@ VALUES (1, 'G'),
        (4, 'R'),
        (5, 'NC-17');
 
-------------------------------------------------------------
--- Жанры
-------------------------------------------------------------
+
 INSERT INTO genres (id, name)
 VALUES (1, 'Action'),
        (2, 'Comedy'),
@@ -39,9 +41,7 @@ VALUES (1, 'Action'),
        (9, 'Documentary'),
        (10, 'Family');
 
-------------------------------------------------------------
--- Пользователи
-------------------------------------------------------------
+
 INSERT INTO users (id, email, login, name, birthday)
 VALUES (1, 'alice@example.com', 'alice', 'Alice Johnson', DATE '1995-04-12'),
        (2, 'bob@example.com', 'bob', 'Bob Smith', DATE '1990-11-03'),
@@ -50,9 +50,7 @@ VALUES (1, 'alice@example.com', 'alice', 'Alice Johnson', DATE '1995-04-12'),
        (5, 'erin@example.com', 'erin', 'Erin Wilson', DATE '1997-12-01'),
        (6, 'frank@example.com', 'frank', 'Frank Thompson', DATE '1993-08-25');
 
-------------------------------------------------------------
--- Фильмы
-------------------------------------------------------------
+
 INSERT INTO films (id, name, description, release_date, duration_minutes, mpa_rating_id)
 VALUES (1, 'Stellar Voyage', 'Indie sci-fi about a deep-space survey.', DATE '2019-09-20', 118, 3),
        (2, 'Love in the City', 'Romantic story of two strangers in a metro.', DATE '2021-02-14', 102, 2),
@@ -63,38 +61,24 @@ VALUES (1, 'Stellar Voyage', 'Indie sci-fi about a deep-space survey.', DATE '20
        (7, 'Pixel Pals', 'Animated adventure for all ages.', DATE '2023-05-27', 88, 1),
        (8, 'Into the Abyss', 'Psychological horror in an abandoned hospital.', DATE '2020-10-30', 101, 4);
 
-------------------------------------------------------------
--- Связь фильм—жанр (многие-ко-многим)
-------------------------------------------------------------
-INSERT INTO film_genre (id, film_id, genre_id)
-VALUES
--- Stellar Voyage
-(1, 1, 4),  -- Sci-Fi
-(2, 1, 7),  -- Thriller
--- Love in the City
-(3, 2, 6),  -- Romance
-(4, 2, 2),  -- Comedy
--- Midnight Chase
-(5, 3, 7),  -- Thriller
-(6, 3, 1),  -- Action
--- Laugh Factory
-(7, 4, 2),  -- Comedy
--- The Last Fortress
-(8, 5, 1),  -- Action
-(9, 5, 7),  -- Thriller
--- Waves of Silence
-(10, 6, 3), -- Drama
--- Pixel Pals
-(11, 7, 8), -- Animation
-(12, 7, 10),-- Family
--- Into the Abyss
-(13, 8, 5), -- Horror
-(14, 8, 7);
--- Thriller
 
-------------------------------------------------------------
--- Лайки пользователя фильму
-------------------------------------------------------------
+INSERT INTO film_genre (id, film_id, genre_id)
+VALUES (1, 1, 4),
+       (2, 1, 7),
+       (3, 2, 6),
+       (4, 2, 2),
+       (5, 3, 7),
+       (6, 3, 1),
+       (7, 4, 2),
+       (8, 5, 1),
+       (9, 5, 7),
+       (10, 6, 3),
+       (11, 7, 8),
+       (12, 7, 10),
+       (13, 8, 5),
+       (14, 8, 7);
+
+
 INSERT INTO user_likes_film (id, film_id, user_id)
 VALUES (1, 1, 1),
        (2, 1, 2),
@@ -109,25 +93,21 @@ VALUES (1, 1, 1),
        (11, 6, 3),
        (12, 8, 4);
 
-------------------------------------------------------------
--- Друзья (асимметричная запись)
--- Пример: взаимная дружба (две строки со статусом TRUE в обе стороны),
--- и несколько заявок в друзья (FALSE).
-------------------------------------------------------------
--- Взаимная дружба: Alice (1) ↔ Bob (2)
-INSERT INTO friends (id, user_id, friend_id, status)
-VALUES (1, 1, 2, TRUE),
-       (2, 2, 1, TRUE);
 
--- Взаимная дружба: Carol (3) ↔ Dan (4)
-INSERT INTO friends (id, user_id, friend_id, status)
-VALUES (3, 3, 4, TRUE),
-       (4, 4, 3, TRUE);
+INSERT INTO friends (id, user_id, friend_id)
+VALUES (1, 1, 2),
+       (2, 2, 1),
+       (3, 3, 4),
+       (4, 4, 3),
+       (5, 1, 3),
+       (6, 5, 1),
+       (7, 6, 2);
 
--- Заявки в друзья (ожидают подтверждения)
-INSERT INTO friends (id, user_id, friend_id, status)
-VALUES (5, 1, 3, FALSE), -- Alice -> Carol (ожидание)
-       (6, 5, 1, FALSE), -- Erin  -> Alice (ожидание)
-       (7, 6, 2, FALSE); -- Frank -> Bob   (ожидание)
 
-COMMIT;
+ALTER TABLE mpa_rating      ALTER COLUMN id RESTART WITH 6;
+ALTER TABLE genres          ALTER COLUMN id RESTART WITH 11;
+ALTER TABLE users           ALTER COLUMN id RESTART WITH 7;
+ALTER TABLE films           ALTER COLUMN id RESTART WITH 9;
+ALTER TABLE film_genre      ALTER COLUMN id RESTART WITH 15;
+ALTER TABLE user_likes_film ALTER COLUMN id RESTART WITH 13;
+ALTER TABLE friends         ALTER COLUMN id RESTART WITH 8;

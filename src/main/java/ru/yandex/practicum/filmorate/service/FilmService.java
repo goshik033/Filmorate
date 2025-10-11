@@ -6,11 +6,11 @@ import ru.yandex.practicum.filmorate.exeption.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exeption.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.exeption.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -18,11 +18,13 @@ public class FilmService {
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
+    private final FilmDbStorage filmDbStorage;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage, FilmDbStorage filmDbStorage) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
+        this.filmDbStorage = filmDbStorage;
     }
 
     public Film addLike(long filmId, long userId) {
@@ -32,30 +34,21 @@ public class FilmService {
         Film film = filmStorage.getFilm(filmId)
                 .orElseThrow(() -> new FilmNotFoundException(filmId));
 
-        film.getLikes().add(userId);
-        filmStorage.updateFilm(film);
-        return film;
+
+        return filmDbStorage.addLike(filmId, userId);
     }
 
     public void removeLike(long filmId, long userId) {
         userStorage.getUser(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-        Film film = filmStorage.getFilm(filmId)
+        filmStorage.getFilm(filmId)
                 .orElseThrow(() -> new FilmNotFoundException(filmId));
 
-        film.getLikes().remove(userId);
-        filmStorage.updateFilm(film);
+        filmDbStorage.removeLike(filmId, userId);
     }
 
     public List<Film> getPopularFilms(int count) {
-        return filmStorage.getAllFilms().stream()
-                .sorted(
-                        Comparator.comparingInt((Film f) -> f.getLikes() == null ? 0 : f.getLikes().size())
-                                .reversed()
-                                .thenComparing(Film::getId)
-                )
-                .limit(count)
-                .toList();
+        return filmDbStorage.getPopularFilms(count);
     }
 
 
