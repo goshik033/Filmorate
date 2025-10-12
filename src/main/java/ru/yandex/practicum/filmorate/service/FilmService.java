@@ -30,7 +30,7 @@ public class FilmService {
 
         userStorage.getUser(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-        Film film = filmStorage.getFilm(filmId)
+        filmStorage.getFilm(filmId)
                 .orElseThrow(() -> new FilmNotFoundException(filmId));
 
 

@@ -24,6 +24,12 @@ public class ErrorHandler {
     public ErrorResponse handleNotFound(GenreNotFoundException e) {
         return new ErrorResponse("Жанр не найден", e.getMessage());
     }
+
+    @ExceptionHandler(ReviewNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(ReviewNotFoundException e) {
+        return new ErrorResponse("Отзыв не найден", e.getMessage());
+    }
     @ExceptionHandler(MpaNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFound(MpaNotFoundException e) {
