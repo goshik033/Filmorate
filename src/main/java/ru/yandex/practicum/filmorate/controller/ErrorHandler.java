@@ -4,10 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.yandex.practicum.filmorate.exeption.FilmNotFoundException;
-import ru.yandex.practicum.filmorate.exeption.IncorrectParameterException;
-import ru.yandex.practicum.filmorate.exeption.UserAlreadyExistsException;
-import ru.yandex.practicum.filmorate.exeption.UserNotFoundException;
+import ru.yandex.practicum.filmorate.exception.*;
 
 @RestControllerAdvice
 public class ErrorHandler {
@@ -21,6 +18,16 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFound(UserNotFoundException e) {
         return new ErrorResponse("Пользователь не найден", e.getMessage());
+    }
+    @ExceptionHandler(GenreNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(GenreNotFoundException e) {
+        return new ErrorResponse("Жанр не найден", e.getMessage());
+    }
+    @ExceptionHandler(MpaNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(MpaNotFoundException e) {
+        return new ErrorResponse("Mpa не найден", e.getMessage());
     }
     @ExceptionHandler(UserAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)

@@ -8,24 +8,25 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exeption.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.MpaRating;
+import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
 @Primary
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
+    private final GenreStorage genreStorage;
     private static final Logger log = LoggerFactory.getLogger(FilmDbStorage.class);
+
 
     @Override
     public List<Film> getAllFilms() {
@@ -38,7 +39,7 @@ public class FilmDbStorage implements FilmStorage {
 
         List<Film> films = jdbcTemplate.query(sql, (rs, rowNum) -> makeFilm(rs));
         for (Film f : films) {
-            f.setGenres(getGenresByFilmId(f.getId()));
+            f.setGenres(genreStorage.getGenresByFilmId(f.getId()));
         }
         return films;
     }
@@ -57,7 +58,7 @@ public class FilmDbStorage implements FilmStorage {
         if (list.isEmpty()) return Optional.empty();
 
         Film film = list.get(0);
-        film.setGenres(getGenresByFilmId(film.getId()));
+        film.setGenres(genreStorage.getGenresByFilmId(film.getId()));
         return Optional.of(film);
     }
 
@@ -76,15 +77,15 @@ public class FilmDbStorage implements FilmStorage {
             ps.setString(2, film.getDescription() == null ? "" : film.getDescription());
             ps.setDate(3, Date.valueOf(film.getReleaseDate()));
             ps.setLong(4, film.getDurationMinutes());
-            ps.setLong(5, film.getMpaRating().getId());
+            ps.setLong(5, film.getMpa().getId());
             return ps;
         }, kh);
 
         film.setId(kh.getKey().longValue());
 
-        replaceGenres(film.getId(), film.getGenres());
+        genreStorage.replaceGenres(film.getId(), film.getGenres());
 
-        film.setGenres(getGenresByFilmId(film.getId()));
+        film.setGenres(genreStorage.getGenresByFilmId(film.getId()));
         return film;
     }
 
@@ -106,7 +107,7 @@ public class FilmDbStorage implements FilmStorage {
             ps.setString(2, film.getDescription() == null ? "" : film.getDescription());
             ps.setDate(3, java.sql.Date.valueOf(film.getReleaseDate()));
             ps.setLong(4, film.getDurationMinutes());
-            ps.setLong(5, film.getMpaRating().getId());
+            ps.setLong(5, film.getMpa().getId());
             ps.setLong(6, film.getId());
             return ps;
         });
@@ -115,7 +116,7 @@ public class FilmDbStorage implements FilmStorage {
             throw new FilmNotFoundException(film.getId());
         }
 
-        replaceGenres(film.getId(), film.getGenres());
+        genreStorage.replaceGenres(film.getId(), film.getGenres());
 
         final String select = """
                 SELECT f.id, f.name, f.description, f.release_date, f.duration_minutes,
@@ -125,7 +126,7 @@ public class FilmDbStorage implements FilmStorage {
                  WHERE f.id = ?
                 """;
         Film updated = jdbcTemplate.queryForObject(select, (rs, rowNum) -> makeFilm(rs), film.getId());
-        updated.setGenres(getGenresByFilmId(updated.getId()));
+        updated.setGenres(genreStorage.getGenresByFilmId(updated.getId()));
         return updated;
     }
 
@@ -179,7 +180,7 @@ public class FilmDbStorage implements FilmStorage {
         List<Film> films = jdbcTemplate.query(sql, (rs, rowNum) -> makeFilm(rs), count);
 
         for (Film f : films) {
-            f.setGenres(getGenresByFilmId(f.getId()));
+            f.setGenres(genreStorage.getGenresByFilmId(f.getId()));
         }
         return films;
     }
@@ -193,47 +194,9 @@ public class FilmDbStorage implements FilmStorage {
         long durationMinutes = rs.getLong("duration_minutes");
         long mpaId = rs.getLong("mpa_id");
         String mpaName = rs.getString("mpa_name");
-        MpaRating mpaRating = new MpaRating(mpaId, mpaName);
-        return new Film(id, name, description, releaseDate, durationMinutes, mpaRating, new LinkedHashSet<>());
+        Mpa mpa = new Mpa(mpaId, mpaName);
+        return new Film(id, name, description, releaseDate, durationMinutes, mpa, new LinkedHashSet<>());
     }
 
-    private void replaceGenres(long filmId, Set<Genre> genres) {
-        jdbcTemplate.update("DELETE FROM film_genre WHERE film_id=?", filmId);
-        if (genres == null || genres.isEmpty()) return;
 
-        var ids = genres.stream()
-                .map(Genre::getId)
-                .filter(java.util.Objects::nonNull)
-                .distinct()
-                .toList();
-
-        jdbcTemplate.batchUpdate(
-                "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)",
-                new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
-                    @Override
-                    public void setValues(java.sql.PreparedStatement ps, int i) throws java.sql.SQLException {
-                        ps.setLong(1, filmId);
-                        ps.setLong(2, ids.get(i));
-                    }
-
-                    @Override
-                    public int getBatchSize() {
-                        return ids.size();
-                    }
-                }
-        );
-    }
-
-    private java.util.LinkedHashSet<Genre> getGenresByFilmId(long filmId) {
-        final String sql = """
-                SELECT g.id, g.name
-                  FROM film_genre fg
-                  JOIN genres g ON g.id = fg.genre_id
-                 WHERE fg.film_id = ?
-                 ORDER BY g.id
-                """;
-        var list = jdbcTemplate.query(sql, (rs, rn) ->
-                new Genre(rs.getLong("id"), rs.getString("name")), filmId);
-        return new java.util.LinkedHashSet<>(list);
-    }
 }

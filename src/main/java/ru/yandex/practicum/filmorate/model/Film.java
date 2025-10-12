@@ -2,11 +2,8 @@ package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
-import org.springframework.stereotype.Indexed;
 
-import java.time.Duration;
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -28,7 +25,7 @@ public class Film {
     @Positive
     private Long durationMinutes;
     @NotNull
-    private MpaRating mpaRating;
+    private Mpa mpa;
     private Set<Genre> genres = new java.util.LinkedHashSet<>();
 
 

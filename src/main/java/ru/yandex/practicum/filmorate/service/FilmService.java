@@ -2,11 +2,10 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exeption.FilmNotFoundException;
-import ru.yandex.practicum.filmorate.exeption.IncorrectParameterException;
-import ru.yandex.practicum.filmorate.exeption.UserNotFoundException;
+import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.film.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -18,13 +17,13 @@ public class FilmService {
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
-    private final FilmDbStorage filmDbStorage;
+
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage, FilmDbStorage filmDbStorage) {
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
-        this.filmDbStorage = filmDbStorage;
+
     }
 
     public Film addLike(long filmId, long userId) {
@@ -35,7 +34,7 @@ public class FilmService {
                 .orElseThrow(() -> new FilmNotFoundException(filmId));
 
 
-        return filmDbStorage.addLike(filmId, userId);
+        return filmStorage.addLike(filmId, userId);
     }
 
     public void removeLike(long filmId, long userId) {
@@ -44,11 +43,11 @@ public class FilmService {
         filmStorage.getFilm(filmId)
                 .orElseThrow(() -> new FilmNotFoundException(filmId));
 
-        filmDbStorage.removeLike(filmId, userId);
+        filmStorage.removeLike(filmId, userId);
     }
 
     public List<Film> getPopularFilms(int count) {
-        return filmDbStorage.getPopularFilms(count);
+        return filmStorage.getPopularFilms(count);
     }
 
 
