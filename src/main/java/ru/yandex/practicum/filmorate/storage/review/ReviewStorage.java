@@ -15,4 +15,20 @@ public interface ReviewStorage {
     Optional<Review> getReview(long id);
 
     List<Review> getAllReviews();
+
+    List<Review> getMostUsefulReviews(long filmId, int limit);
+
+    void addLike(long reviewId, long userId);
+
+    void addDislike(long reviewId, long userId);
+
+    void deleteLike(long reviewId, long userId);
+
+    void deleteDislike(long reviewId, long userId);
+
+    Optional<ReactionType> getUserReaction(long reviewId, long userId);
+
+    void recomputeUseful(long reviewId);
+
+    enum ReactionType {LIKE, DISLIKE}
 }

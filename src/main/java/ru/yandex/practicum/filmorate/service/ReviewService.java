@@ -62,7 +62,7 @@ public class ReviewService {
 
     public void deleteReview(long id) {
         if (id <= 0) {
-            throw new IncorrectParameterException("id должен быть положительным. Текущее значение: " + id, "filmId");
+            throw new IncorrectParameterException("id должен быть положительным. Текущее значение: " + id, "reviewId");
         }
         reviewStorage.getReview(id).orElseThrow(() -> new ReviewNotFoundException(id));
 
@@ -72,7 +72,7 @@ public class ReviewService {
 
     public Review getReview(long id) {
         if (id <= 0) {
-            throw new IncorrectParameterException("id должен быть положительным. Текущее значение: " + id, "filmId");
+            throw new IncorrectParameterException("id должен быть положительным. Текущее значение: " + id, "reviewId");
         }
         return reviewStorage.getReview(id).orElseThrow(() -> new ReviewNotFoundException(id));
     }
@@ -81,4 +81,33 @@ public class ReviewService {
     public List<Review> getAllReviews() {
         return reviewStorage.getAllReviews();
     }
+
+    public List<Review> getTopUsefulReviews(long filmId, int limit) {
+        if (filmId <= 0) {
+            throw new IncorrectParameterException("filmId должен быть положительным: " + filmId, "filmId");
+        }
+        filmStorage.getFilm(filmId)
+                .orElseThrow(() -> new FilmNotFoundException(filmId));
+
+        return reviewStorage.getMostUsefulReviews(filmId, limit);
+    }
+
+    public Review addLike(long reviewId, long userId) {
+        reviewStorage.addLike(reviewId, userId);
+        return reviewStorage.getReview(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+    }
+
+    public Review addDislike(long reviewId, long userId) {
+        reviewStorage.addDislike(reviewId, userId);
+        return reviewStorage.getReview(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+    }
+
+    public void deleteLike(long reviewId, long userId) {
+        reviewStorage.deleteLike(reviewId, userId);
+    }
+
+    public void deleteDislike(long reviewId, long userId) {
+        reviewStorage.deleteDislike(reviewId, userId);
+    }
+
 }

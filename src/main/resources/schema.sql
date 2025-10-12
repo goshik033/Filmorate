@@ -1,4 +1,4 @@
--- Снести старые таблицы 
+-- Снести старые таблицы
 DROP TABLE IF EXISTS friends CASCADE;
 DROP TABLE IF EXISTS user_likes_film CASCADE;
 DROP TABLE IF EXISTS film_genre CASCADE;
