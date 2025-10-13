@@ -5,7 +5,9 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.exception.UserAlreadyExistsException;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.HashSet;
@@ -16,10 +18,12 @@ import java.util.Set;
 @Service
 public class UserService {
     private final UserStorage userStorage;
+    private final FilmStorage filmStorage;
 
     @Autowired
-    public UserService(UserStorage userStorage) {
+    public UserService(UserStorage userStorage, FilmStorage filmStorage) {
         this.userStorage = userStorage;
+        this.filmStorage = filmStorage;
     }
 
     public List<User> getUsers() {
@@ -140,5 +144,11 @@ public class UserService {
         if (u.getName() == null || u.getName().isBlank()) {
             u.setName(u.getLogin());
         }
+    }
+
+    public List<Film> getRecommendFilms(long userId) {
+        userStorage.getUser(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        return filmStorage.getRecommendFilms(userId);
     }
 }

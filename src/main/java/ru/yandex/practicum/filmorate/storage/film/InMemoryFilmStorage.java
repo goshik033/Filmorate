@@ -60,6 +60,11 @@ public class InMemoryFilmStorage implements FilmStorage {
         return List.of();
     }
 
+    @Override
+    public List<Film> getRecommendFilms(long userId) {
+        return List.of();
+    }
+
 
 }
 

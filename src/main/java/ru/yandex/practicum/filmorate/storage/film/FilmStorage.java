@@ -26,6 +26,8 @@ public interface FilmStorage {
 
     List<Film> getCommonFilms(long userId, long filmId);
 
+    List<Film> getRecommendFilms(long userId);
+
     enum SearchBy {
         TITLE, DIRECTOR, TITLE_AND_DIRECTOR
     }

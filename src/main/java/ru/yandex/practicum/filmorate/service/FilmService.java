@@ -49,12 +49,19 @@ public class FilmService {
     }
 
     public List<Film> getPopularFilms(int count) {
+
         return filmStorage.getPopularFilms(count);
     }
 
     public List<Film> getCommonFilms(long userId, long friendId) {
+        userStorage.getUser(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        userStorage.getUser(friendId)
+                .orElseThrow(() -> new UserNotFoundException(friendId));
         return filmStorage.getCommonFilms(userId, friendId);
     }
+
+
 
 
     public List<Film> getAllFilms() {

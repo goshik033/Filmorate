@@ -181,7 +181,6 @@ public class FilmDbStorage implements FilmStorage {
 
         for (Film f : films) {
             f.setGenres(genreStorage.getGenresByFilmId(f.getId()));
-            f.setDirectors(getDirectorsByFilmId(f.getId()));
 
         }
         return films;
@@ -278,6 +277,46 @@ public class FilmDbStorage implements FilmStorage {
         }
         return films;
     }
+
+    @Override
+    public List<Film> getRecommendFilms(long userId) {
+        final String sql = """
+                WITH top_match AS (
+                    SELECT ul2.user_id AS similar_user_id
+                    FROM user_likes_film ul1
+                    JOIN user_likes_film ul2
+                      ON ul1.film_id = ul2.film_id
+                     AND ul2.user_id <> ?
+                    WHERE ul1.user_id = ?
+                    GROUP BY ul2.user_id
+                    ORDER BY COUNT(*) DESC
+                    FETCH FIRST 1 ROWS ONLY
+                )
+                SELECT f.id, f.name, f.description, f.release_date, f.duration_minutes, f.mpa_rating_id, m.name AS mpa_name
+                FROM top_match tm
+                JOIN user_likes_film v ON v.user_id = tm.similar_user_id
+                JOIN films f          ON f.id = v.film_id
+                JOIN mpa_rating m ON m.id = f.mpa_rating_id
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM user_likes_film me
+                    WHERE me.user_id = ?
+                      AND me.film_id = v.film_id
+                )
+                ORDER BY f.id
+                """;
+        List<Film> films =jdbcTemplate.query(sql,
+                this::makeFilm, userId, userId, userId);
+
+        for (Film f : films) {
+            f.setGenres(genreStorage.getGenresByFilmId(f.getId()));
+            f.setDirectors(getDirectorsByFilmId(f.getId()));
+
+        }
+
+        return films;
+    }
+
+
 
 
     private LinkedHashSet<Director> getDirectorsByFilmId(long filmId) {

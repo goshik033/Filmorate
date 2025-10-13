@@ -9,6 +9,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.Date;
@@ -116,6 +117,9 @@ public class UserDbStorage implements UserStorage {
             return Optional.empty();
         }
     }
+
+
+
 
 
     private User makeUser(ResultSet rs) throws SQLException {
