@@ -7,6 +7,8 @@ import ru.yandex.practicum.filmorate.exception.UserAlreadyExistsException;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.event.EventType;
+import ru.yandex.practicum.filmorate.model.event.Operation;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -19,11 +21,13 @@ import java.util.Set;
 public class UserService {
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    private final EventService eventService;
 
     @Autowired
-    public UserService(UserStorage userStorage, FilmStorage filmStorage) {
+    public UserService(UserStorage userStorage, FilmStorage filmStorage, EventService eventService) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
+        this.eventService = eventService;
     }
 
     public List<User> getUsers() {
@@ -87,6 +91,9 @@ public class UserService {
 
         userStorage.updateUser(u);
         userStorage.updateUser(f);
+
+        eventService.publish(userId, EventType.FRIEND, Operation.ADD, friendId);
+
         return u;
     }
 
@@ -122,6 +129,9 @@ public class UserService {
 
         userStorage.updateUser(u);
         userStorage.updateUser(f);
+
+        eventService.publish(userId, EventType.FRIEND, Operation.DELETE, friendId);
+
         return u;
     }
 

@@ -6,6 +6,9 @@ import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.event.EventType;
+import ru.yandex.practicum.filmorate.model.event.Operation;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -18,13 +21,15 @@ import java.util.Set;
 public class FilmService {
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    private final EventService eventService;
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
 
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage, EventService eventService) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
+        this.eventService = eventService;
 
     }
 
@@ -35,6 +40,7 @@ public class FilmService {
         filmStorage.getFilm(filmId)
                 .orElseThrow(() -> new FilmNotFoundException(filmId));
 
+        eventService.publish(userId, EventType.FILM, Operation.LIKE, filmId);
 
         return filmStorage.addLike(filmId, userId);
     }
@@ -44,6 +50,8 @@ public class FilmService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
         filmStorage.getFilm(filmId)
                 .orElseThrow(() -> new FilmNotFoundException(filmId));
+
+        eventService.publish(userId, EventType.FILM, Operation.UNLIKE, filmId);
 
         filmStorage.removeLike(filmId, userId);
     }
