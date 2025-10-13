@@ -50,6 +50,11 @@ public class InMemoryFilmStorage implements FilmStorage {
         return List.of();
     }
 
+    @Override
+    public List<Film> searchFilm(String query, Set<SearchBy> by, Integer limit, Integer offset) {
+        return List.of();
+    }
+
 
 }
 

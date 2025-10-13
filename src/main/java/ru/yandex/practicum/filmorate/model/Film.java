@@ -27,6 +27,7 @@ public class Film {
     @NotNull
     private Mpa mpa;
     private Set<Genre> genres = new java.util.LinkedHashSet<>();
+    private Set<Director> directors = new java.util.LinkedHashSet<>();
 
 
 }

@@ -10,7 +10,9 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class FilmService {
@@ -90,6 +92,20 @@ public class FilmService {
             throw new IncorrectParameterException(
                     "Дата релиза не может быть раньше " + CINEMA_BIRTHDAY, "releaseDate");
         }
+    }
+
+
+    public List<Film> searchFilms(String query,
+                                  Set<FilmStorage.SearchBy> by,
+                                  Integer limit,
+                                  Integer offset) {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+        if (by == null || by.isEmpty()) {
+            by = EnumSet.of(FilmStorage.SearchBy.TITLE);
+        }
+        return filmStorage.searchFilm(query.trim(), by, limit, offset);
     }
 
 }

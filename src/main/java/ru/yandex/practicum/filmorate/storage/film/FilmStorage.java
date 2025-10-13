@@ -4,6 +4,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface FilmStorage {
 
@@ -20,6 +21,12 @@ public interface FilmStorage {
     void removeLike(long filmId, long userId);
 
     List<Film> getPopularFilms(int count);
+
+    List<Film> searchFilm(String query, Set<SearchBy> by, Integer limit, Integer offset);
+
+    enum SearchBy {
+        TITLE, DIRECTOR, TITLE_AND_DIRECTOR
+    }
 }
 
 
