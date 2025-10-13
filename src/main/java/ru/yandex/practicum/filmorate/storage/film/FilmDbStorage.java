@@ -11,12 +11,11 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
-import java.sql.*;
 import java.sql.Date;
+import java.sql.*;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -183,7 +182,7 @@ public class FilmDbStorage implements FilmStorage {
         for (Film f : films) {
             f.setGenres(genreStorage.getGenresByFilmId(f.getId()));
             f.setDirectors(getDirectorsByFilmId(f.getId()));
-                
+
         }
         return films;
     }
@@ -247,6 +246,37 @@ public class FilmDbStorage implements FilmStorage {
                 .replace("%", "\\%")
                 .replace("_", "\\_");
         return "%" + s + "%";
+    }
+
+
+    @Override
+    public List<Film> getCommonFilms(long userId, long filmId) {
+        final String sql = """
+                SELECT f.id,
+                    f.name,
+                    f.description,
+                    f.release_date,
+                    f.duration_minutes,
+                    f.mpa_rating_id,
+                    m.name AS mpa_name 
+                FROM films f
+                JOIN user_likes_film ul1 ON ul1.film_id=f.id AND ul1.user_id=?
+                JOIN user_likes_film ul2 ON ul2.film_id=f.id AND ul2.user_id=?
+                LEFT JOIN user_likes_film allu ON allu.film_id=f.id
+                JOIN mpa_rating m ON m.id = f.mpa_rating_id
+                GROUP BY f.id
+                ORDER BY COUNT(allu.user_id) DESC;
+                                 
+                """;
+
+        List<Film> films = jdbcTemplate.query(sql, this::makeFilm, userId, filmId);
+
+        for (Film f : films) {
+            f.setGenres(genreStorage.getGenresByFilmId(f.getId()));
+            f.setDirectors(getDirectorsByFilmId(f.getId()));
+
+        }
+        return films;
     }
 
 

@@ -24,6 +24,8 @@ public interface FilmStorage {
 
     List<Film> searchFilm(String query, Set<SearchBy> by, Integer limit, Integer offset);
 
+    List<Film> getCommonFilms(long userId, long filmId);
+
     enum SearchBy {
         TITLE, DIRECTOR, TITLE_AND_DIRECTOR
     }
